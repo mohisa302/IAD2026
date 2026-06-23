@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\IAD2026.Application\IAD2026.Application.csproj" />
+    <ProjectReference Include="..\IAD2026.Domain\IAD2026.Domain.csproj" />
+  </ItemGroup>
+
+    <ItemGroup>
+	    <ProjectReference Include="..\IAD2026.Persistence\IAD2026.Persistence.csproj" />
+	    <ProjectReference Include="..\IAD2026.Integrations\IAD2026.Integrations.csproj" />
+	    <ProjectReference Include="..\IAD2026.Logging\IAD2026.Logging.csproj" />
+	    <ProjectReference Include="..\IAD2026.Caching\IAD2026.Caching.csproj" />
+	    <ProjectReference Include="..\IAD2026.BackgroundJobs\IAD2026.BackgroundJobs.csproj" />
+    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Repositories\" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
