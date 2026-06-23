@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace IAD2026.Persistence;
 
-
 public static class DependencyInjection
 {
     public static IServiceCollection AddPersistence(

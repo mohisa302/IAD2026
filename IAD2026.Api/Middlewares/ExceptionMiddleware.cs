@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Threading.Tasks;
-
-namespace IAD2026.Api.Middlewares;
+﻿namespace IAD2026.Api.Middlewares;
 public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;

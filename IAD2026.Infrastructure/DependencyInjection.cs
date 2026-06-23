@@ -1,10 +1,13 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using IAD2026.BackgroundJobs;
+using IAD2026.Caching;
+using IAD2026.Integrations;
+using IAD2026.Logging;
+using IAD2026.Persistence;
 
-
-namespace IAD2026.Infrastructure;
-
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+namespace IAD2026.Infrastructure;
 
 public static class DependencyInjection
 {
