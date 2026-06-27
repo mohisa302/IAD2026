@@ -1,22 +1,66 @@
 # IAD2026 – Enterprise API Management Template
 
-## Overview
+A production-ready **.NET 8 Clean Architecture** template designed for enterprise systems that integrate with multiple external APIs, databases, background jobs, caching, and logging.
 
-This project is a modular **.NET 8 enterprise API management template** designed for large-scale systems with:
+---
 
-- Multiple external API integrations (OAuth2, session-based, API key)
-- Multiple databases (SQL Server, PostgreSQL, etc.)
+## Features
+
+- Clean Architecture
+- Modular design
+- Multiple external API integrations
+- Multiple database support
 - Background job processing
-- Centralized caching and logging
-- Clean Architecture principles
-
-The goal is to provide a **scalable, maintainable, and cross-cutting architecture foundation** for enterprise systems such as telecom platforms (e.g., Irancell).
+- Structured logging
+- Distributed caching ready
+- MediatR + FluentValidation
+- Repository pattern
+- Enterprise-ready project structure
 
 ---
 
 # Architecture
 
-## High-Level Structure
+```mermaid
+flowchart TD
+
+    API["IAD2026.Api"]
+
+    APP["IAD2026.Application"]
+
+    DOMAIN["IAD2026.Domain"]
+
+    SHARED["IAD2026.Shared"]
+
+    INFRA["IAD2026.Infrastructure"]
+
+    PERSIST["Persistence"]
+    INTEGRATIONS["Integrations"]
+    CACHE["Caching"]
+    LOGGING["Logging"]
+    JOBS["Background Jobs"]
+
+    TESTS["IAD2026.Tests"]
+
+    API --> INFRA
+
+    INFRA --> PERSIST
+    INFRA --> INTEGRATIONS
+    INFRA --> CACHE
+    INFRA --> LOGGING
+    INFRA --> JOBS
+
+    APP --> DOMAIN
+    APP --> SHARED
+
+    API --> APP
+
+    TESTS --> API
+```
+
+---
+
+# Solution Structure
 
 ```text
 IAD2026.Api
@@ -25,35 +69,69 @@ IAD2026.Domain
 IAD2026.Shared
 
 IAD2026.Infrastructure
-IAD2026.Persistence
-IAD2026.Integrations
-IAD2026.Caching
-IAD2026.Logging
-IAD2026.BackgroundJobs
+│
+├── Persistence
+├── Integrations
+├── Caching
+├── Logging
+└── BackgroundJobs
 
 IAD2026.Tests
 ```
 
 ---
 
-## Layer Responsibilities
+# Layer Responsibilities
 
-### Domain
+## Domain
 
-- Core business entities
-- Enums
+Contains:
+
+- Entities
 - Value Objects
-- Domain rules
-- No external dependencies
+- Domain Events
+- Domain Exceptions
+- Business Rules
+
+Dependencies:
+
+None
 
 ---
 
-### Application
+## Shared
 
-- Use cases (CQRS via MediatR)
+Contains reusable components shared across the solution.
+
+Examples:
+
+- Result<T>
+- Error
+- ApiResponse
+- Pagination
+- Common DTOs
+- Constants
+- Extensions
+
+Dependencies:
+
+None
+
+---
+
+## Application
+
+Contains all business use cases.
+
+Responsibilities:
+
+- CQRS (MediatR)
+- Commands
+- Queries
 - DTOs
-- Validation (FluentValidation)
-- Abstractions (interfaces for external services)
+- Validation
+- Interfaces
+- Business orchestration
 
 Depends on:
 
@@ -62,228 +140,283 @@ Depends on:
 
 ---
 
-### Shared
+## Infrastructure
 
-- Common primitives:
+Contains implementations for abstractions defined in Application.
 
-  - `Result<T>`
-  - `Error`
-  - `PagedResult<T>`
-
-- Shared constants and extensions
-
-No dependencies
-
----
+Modules include:
 
 ### Persistence
 
-- Entity Framework Core DbContexts
+- Entity Framework Core
+- DbContexts
 - Repository implementations
-- Database configurations
+- Migrations
 
-Supports multiple databases:
+Supports:
 
 - SQL Server
 - PostgreSQL
-- InMemory (testing)
+- InMemory
 
 ---
 
 ### Integrations
 
-- External API clients
-- OAuth2 / API Key / Session-based authentication
-- HTTP communication (HttpClient + Polly)
+External services including:
+
+- OAuth2 APIs
+- API Key APIs
+- Session Authentication APIs
 
 Examples:
 
-- SharePoint API
-- CRM API
-- Billing systems
-- SAP integrations
+- SharePoint
+- SAP
+- CRM
+- Billing Systems
+
+Includes:
+
+- Typed HttpClients
+- Polly resilience
+- Token providers
+- Credential providers
 
 ---
 
 ### Caching
 
-- In-memory caching
-- Redis caching (future-ready)
-- Abstraction via `ICacheService`
+Supports:
+
+- Memory Cache
+- Redis (future)
 
 Used for:
 
-- API tokens
+- Tokens
 - Frequently accessed data
-- External API response caching
+- External API responses
 
 ---
 
 ### Logging
 
-- Serilog-based structured logging
-- File + Console sinks
-- Enriched logs (correlation IDs, environment, etc.)
+Structured logging using:
 
-Abstracted via:
+- Serilog
+- Console
+- File
 
-- `IAppLogger`
+Future:
+
+- Seq
+- Elastic
+- OpenTelemetry
 
 ---
 
-### BackgroundJobs
+### Background Jobs
 
-- Hangfire-based job processing
-- Recurring jobs
-- Delayed execution jobs
+Uses Hangfire for:
 
-Examples:
-
-- Data sync jobs
-- Token refresh jobs
+- Scheduled jobs
+- Retry jobs
+- Synchronization
 - Cleanup jobs
 
 ---
 
-### Infrastructure
+## API
 
-- Composition root
-- Wires all modules together
-- Contains no business logic
+Responsibilities:
 
----
-
-### API
-
-- ASP.NET Core Web API
-- Controllers
-- Middlewares
+- REST Endpoints
+- Carter Modules
 - Swagger
-- Authentication (future)
+- Middleware
+- Authentication
+- Dependency Injection
+
+Contains:
+
+- Health endpoints
+- External API endpoints
+- Task endpoints
 
 ---
 
-# Key Design Principles
+## Tests
 
-## 1. Cross-Cutting Abstractions
+Contains:
 
-All system-wide concerns are abstracted:
-
-- Logging → `IAppLogger`
-- Caching → `ICacheService`
-- External APIs → `IExternalClient`
-- Persistence → `IRepository`
+- Unit Tests
+- Integration Tests
 
 ---
 
-## 2. Separation of Concerns
+# Dependency Flow
 
-Each module owns:
+```mermaid
+flowchart LR
 
-- Its implementation
-- Its dependencies
-- Its registration logic
+API --> Application
 
-via:
+Application --> Domain
+Application --> Shared
 
-```csharp
-services.AddPersistence(configuration);
-services.AddCaching();
-services.AddIntegrations(configuration);
-services.AddLoggingModule(configuration);
-services.AddBackgroundJobs();
+API --> Infrastructure
+
+Infrastructure --> Persistence
+Infrastructure --> Integrations
+Infrastructure --> Logging
+Infrastructure --> Caching
+Infrastructure --> BackgroundJobs
 ```
 
 ---
 
-## 3. Dependency Flow
+# External API Strategy
 
-```text
-Api
- └── Infrastructure
-      ├── Persistence
-      ├── Integrations
-      ├── Caching
-      ├── Logging
-      └── BackgroundJobs
+Each external system is isolated behind:
 
-Application → Domain + Shared
-Infrastructure → Modules
-```
+- Typed HttpClient
+- Credential Provider
+- Authentication Strategy
+- Resilience Policies
+- Logging
+- Caching
 
----
+Benefits:
 
-## 4. External API Strategy
-
-All external APIs are isolated behind:
-
-- Typed clients
-- Credential providers (OAuth2 / API Key / Session)
-- Central HTTP executor with resilience (Polly)
-
-This ensures:
-
-- No duplicated authentication logic
-- No duplicated retry logic
-- Centralized observability
+- Reusable
+- Testable
+- Maintainable
+- Easy to replace
 
 ---
 
-## 5. Database Strategy
+# Database Strategy
 
-Supports multiple DbContexts:
+Supports multiple databases.
 
-- Each domain area can have its own context
-- Repositories are grouped per bounded context
-- No shared DbContext across unrelated domains
+Examples:
 
----
+- SQL Server
+- PostgreSQL
+- SQLite (testing)
+- InMemory
 
-## 6. Background Processing Strategy
-
-Uses Hangfire for:
-
-- Persistent jobs
-- Retry support
-- Dashboard monitoring
+Each bounded context may own its own DbContext.
 
 ---
 
-# Tech Stack
+# Background Processing
 
-- .NET 8
-- ASP.NET Core Web API
-- MediatR
-- FluentValidation
-- Entity Framework Core
-- Serilog
-- Hangfire
-- Polly
-- StackExchange.Redis
-- Mapster
+Hangfire is used for:
+
+- Data synchronization
+- Token refresh
+- Scheduled imports
+- Cleanup
+- Retry processing
+
+---
+
+# Logging
+
+Uses Serilog with structured logging.
+
+Supports:
+
+- Correlation IDs
+- Request logging
+- Exception logging
+- Performance logging
+
+---
+
+# Caching
+
+Current:
+
+- Memory Cache
+
+Future:
+
+- Redis
+- Distributed Cache
+
+---
+
+# Technology Stack
+
+| Technology | Purpose |
+|------------|---------|
+| .NET 8 | Runtime |
+| ASP.NET Core | Web API |
+| Carter | Minimal API modules |
+| MediatR | CQRS |
+| FluentValidation | Validation |
+| Entity Framework Core | ORM |
+| Serilog | Logging |
+| Hangfire | Background Jobs |
+| Polly | Resilience |
+| StackExchange.Redis | Distributed Cache |
+| Mapster | Object Mapping |
+
+---
+
+# Design Principles
+
+- Clean Architecture
+- Dependency Inversion
+- Separation of Concerns
+- SOLID
+- Modular Design
+- Plugin-based Integrations
+- Testability
+- High Maintainability
 
 ---
 
 # Current Status
 
-This template is in early-stage setup:
+✅ Solution structure created
 
-✔ Project structure created
-✔ Clean architecture defined
-✔ Cross-cutting modules separated
-⏳ Dependency implementations pending
-⏳ External API layer design pending
-⏳ Database contexts pending
+✅ Architecture defined
+
+✅ Dependency injection strategy
+
+✅ Module separation
+
+🚧 External API framework
+
+🚧 Persistence implementation
+
+🚧 Authentication
+
+🚧 Background jobs
+
+🚧 Caching
+
+---
+
+# Future Roadmap
+
+- OAuth2 Provider Framework
+- Dynamic Plugin System
+- OpenTelemetry
+- Distributed Caching
+- Multi-database Transactions
+- API Gateway Support
+- Event Bus
+- Docker Compose
+- Kubernetes Deployment
+- CI/CD Pipeline
 
 ---
 
-# Future Improvements
+# License
 
-- OAuth2 credential provider system
-- Central API gateway layer
-- Distributed caching (Redis cluster)
-- Observability stack (OpenTelemetry)
-- Multi-database transaction strategy
-- Modular plugin-based integrations
-
----
+Internal Enterprise Template
