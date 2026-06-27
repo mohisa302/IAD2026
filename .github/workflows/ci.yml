@@ -20,10 +20,10 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore dependencies
-        run: dotnet restore TaskManagement.sln
+        run: dotnet restore IAD2026.sln
 
       - name: Build solution
-        run: dotnet build TaskManagement.sln --configuration Release --no-restore
+        run: dotnet build IAD2026.sln --configuration Release --no-restore
 
       - name: Run tests
-        run: dotnet test TaskManagement.sln --configuration Release --no-build --verbosity normal
+        run: dotnet test IAD2026.sln --configuration Release --no-build --verbosity normal
