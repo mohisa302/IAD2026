@@ -29,7 +29,7 @@ public class FetchExternalDataHandler : IRequestHandler<FetchExternalDataQuery, 
 
             _logger.LogInformation("Successfully fetched data from external system {SystemKey}", request.SystemKey);
 
-            return ApiResponse<object?>.SuccessResponse(result);
+            return ApiResponse<object?>.Success(result);
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
