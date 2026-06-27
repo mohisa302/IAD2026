@@ -32,7 +32,7 @@ public class HealthModuleTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.NotNull(content);
         Assert.Equal("Healthy", content.Status);
-        Assert.Equal("Development", content.Environment); // Now safe
+        Assert.Equal("Development", content.Environment); 
         Assert.True(content.Timestamp > DateTime.MinValue);
     }
 

@@ -1,14 +1,18 @@
-﻿using IAD2026.Shared;
-using Serilog;
-using System.Net;
+﻿using IAD2026.Application.Exceptions;
+using IAD2026.Shared;
 
 namespace IAD2026.Api.Middlewares;
 
 public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionMiddleware> _logger;
 
-    public ExceptionMiddleware(RequestDelegate next) => _next = next;
+    public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -18,7 +22,7 @@ public class ExceptionMiddleware
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Unhandled exception occurred");
+            _logger.LogError(ex, "Unhandled exception occurred");
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -26,16 +30,26 @@ public class ExceptionMiddleware
     private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-        var response = ApiResponse<object>.ErrorResponse(
-            errorCode: "INTERNAL_SERVER_ERROR",
-            message: "An unexpected error occurred. Please try again later.",
-            statusCode: 500
-        );
+        ApiResponse<object> response;
+        int statusCode;
 
-        context.Response.Headers.Append("X-Error-Code", "INTERNAL_SERVER_ERROR");
+        switch (exception)
+        {
+            case ExternalApiException ex:
+                statusCode = (int)ex.StatusCode;
+                response = ApiResponse<object>.Error(ex.ErrorCode, ex.Message, statusCode);
+                context.Response.Headers.Append("X-Error-Code", ex.ErrorCode);
+                break;
 
+            default:
+                statusCode = StatusCodes.Status500InternalServerError;
+                response = ApiResponse<object>.Error(ErrorCodes.InternalServerError, "An unexpected error occurred", statusCode);
+                context.Response.Headers.Append("X-Error-Code", ErrorCodes.InternalServerError);
+                break;
+        }
+
+        context.Response.StatusCode = statusCode;
         await context.Response.WriteAsJsonAsync(response);
     }
 }
