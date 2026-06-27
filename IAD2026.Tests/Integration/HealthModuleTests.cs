@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
 using Xunit;
@@ -11,7 +12,11 @@ public class HealthModuleTests : IClassFixture<WebApplicationFactory<Program>>
 
     public HealthModuleTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.CreateClient();
+        // Set environment to Development for consistent test results
+        _client = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
+        }).CreateClient();
     }
 
     [Fact]
@@ -27,12 +32,13 @@ public class HealthModuleTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.NotNull(content);
         Assert.Equal("Healthy", content.Status);
-        Assert.Equal("Development", content.Environment); // Adjust if needed
+        Assert.Equal("Development", content.Environment); // Now safe
+        Assert.True(content.Timestamp > DateTime.MinValue);
     }
 
     private record HealthResponse(
         string Status,
         DateTime Timestamp,
-        string Environment
+        string? Environment
     );
 }

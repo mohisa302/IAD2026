@@ -1,4 +1,6 @@
 ﻿using Carter;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 
 namespace IAD2026.Api.Modules.Health;
 
@@ -6,14 +8,13 @@ public class HealthModule : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        // Simple GET endpoint
-        app.MapGet("/api/health", () =>
+        app.MapGet("/api/health", ([FromServices] IWebHostEnvironment env) =>
         {
             return Results.Ok(new
             {
                 Status = "Healthy",
                 Timestamp = DateTime.UtcNow,
-                Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+                Environment = env.EnvironmentName
             });
         })
         .WithName("HealthCheck")
