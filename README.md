@@ -1,6 +1,6 @@
 # IAD2026 – Enterprise API Management Template
 
-A production-ready **.NET 8 Clean Architecture** template designed for enterprise systems that integrate with multiple external APIs, databases, background jobs, caching, and logging.
+A production-ready **.NET 10 Clean Architecture** template designed for enterprise systems that integrate with multiple external APIs, databases, background jobs, caching, and logging.
 
 ---
 
