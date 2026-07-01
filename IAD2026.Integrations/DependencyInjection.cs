@@ -16,7 +16,8 @@ public static class DependencyInjection
     {
         // 1. Credential Provider
         services.AddScoped<IExternalCredentialProvider, ConfigurationCredentialProvider>();
-        // 2. Resilient Http Client
+
+        // 2. Resilient Http Client (Polly is already here via AddResilienceHandler)
         services.AddHttpClient("ExternalApi")
             .AddResilienceHandler("external-api-pipeline", builder =>
             {
@@ -35,7 +36,7 @@ public static class DependencyInjection
                 builder.AddTimeout(TimeSpan.FromSeconds(30));
             });
 
-        // 3. Register the implementation
+        // 3. Register the API Client
         services.AddScoped<IExternalApiClient, ResilientExternalApiClient>();
 
         return services;
