@@ -5,6 +5,7 @@ using System.Text.Json;
 using IAD2026.Application.Exceptions;
 using IAD2026.Application.Interfaces;
 using IAD2026.Shared;
+using IAD2026.Shared.Models;
 using Microsoft.Extensions.Logging;   // ← Use this
 
 namespace IAD2026.Integrations.Clients;
@@ -102,19 +103,19 @@ public class ResilientExternalApiClient : IExternalApiClient
     {
         client.DefaultRequestHeaders.Clear();
 
-        switch (credential.AuthType.ToLowerInvariant())
+        switch (credential.AuthType)
         {
-            case "apikey":
+            case AuthType.ApiKey:
                 if (!string.IsNullOrEmpty(credential.ApiKey))
                     client.DefaultRequestHeaders.Add("X-Api-Key", credential.ApiKey);
                 break;
 
-            case "bearer":
+            case AuthType.Bearer:
                 if (!string.IsNullOrEmpty(credential.Token))
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", credential.Token);
                 break;
 
-            case "basic":
+            case AuthType.Basic:
                 if (!string.IsNullOrEmpty(credential.Username) && !string.IsNullOrEmpty(credential.Password))
                 {
                     var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{credential.Username}:{credential.Password}"));

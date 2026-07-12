@@ -1,30 +1,42 @@
 ﻿using IAD2026.Application.Interfaces;
-using IAD2026.Shared;
-using Microsoft.Extensions.Configuration;
+using IAD2026.Application.Options;
+using IAD2026.Shared.Models;
+using Microsoft.Extensions.Options;
 
 namespace IAD2026.Integrations.Credentials;
 
 public class ConfigurationCredentialProvider : IExternalCredentialProvider
 {
-    private readonly IConfiguration _config;
+    private readonly ExternalApiOptions _options;
 
-
-    public ConfigurationCredentialProvider(IConfiguration config)
+    public ConfigurationCredentialProvider(IOptions<ExternalApiOptions> options)
     {
-        _config = config;
+        _options = options.Value;
     }
 
     public Task<ApiCredential> GetCredentialAsync(string systemKey, CancellationToken ct = default)
     {
-        var section = _config.GetSection($"ExternalSystems:{systemKey}");
+        if (!_options.Systems.TryGetValue(systemKey, out var system))
+        {
+            throw new InvalidOperationException($"External system '{systemKey}' is not configured in ExternalSystems section.");
+        }
+
+        // Validate AuthType
+        if (!Enum.IsDefined(typeof(AuthType), system.AuthType))
+        {
+            throw new InvalidOperationException(
+                $"Invalid AuthType '{system.AuthType}' configured for system '{systemKey}'. " +
+                "Allowed values: ApiKey, Bearer, Basic.");
+        }
 
         var credential = new ApiCredential(
             SystemKey: systemKey,
-            BaseUrl: section["BaseUrl"] ?? "",
-            AuthType: section["AuthType"] ?? "ApiKey",
-            ApiKey: section["ApiKey"],
-            Username: section["Username"],
-            Password: section["Password"]
+            BaseUrl: system.BaseUrl,
+            AuthType: system.AuthType,
+            ApiKey: system.ApiKey,
+            ApiKeyHeaderName: system.ApiKeyHeaderName,   // ← Comes from config
+            Username: system.Username,
+            Password: system.Password
         );
 
         return Task.FromResult(credential);
