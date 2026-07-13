@@ -1,11 +1,11 @@
 using Carter;
 using IAD2026.Api.Middlewares;
+using IAD2026.Application;
+using IAD2026.Application.Options;
+using IAD2026.Infrastructure;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
-using IAD2026.Api.Middlewares;
-using IAD2026.Application;
-using IAD2026.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,7 +61,9 @@ builder.Host.UseSerilog((ctx, lc) =>
           retainedFileCountLimit: 7);
 });
 
-
+// Register strongly-typed options
+builder.Services.Configure<ExternalApiOptions>(
+    builder.Configuration.GetSection("ExternalSystems"));
 
 var app = builder.Build();
 

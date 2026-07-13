@@ -1,6 +1,4 @@
-﻿using IAD2026.Domain.Entities;
-
-namespace IAD2026.Domain.ValueObjects;
+﻿namespace IAD2026.Domain.ValueObjects;
 
 public sealed class AccessType : ValueObject
 {
