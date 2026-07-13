@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using IAD2026.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 namespace IAD2026.Persistence;
 
 public class AppDbContext : DbContext
@@ -8,5 +9,5 @@ public class AppDbContext : DbContext
     }
 
     // Add your DbSets here later
-    // public DbSet<YourEntity> YourEntities { get; set; }
+    public DbSet<OutboxTask> TaskQueue { get; set; }
 }

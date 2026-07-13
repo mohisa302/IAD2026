@@ -1,8 +1,15 @@
 using Carter;
+using Hangfire;
+using IAD2026.Api.Extensions;
 using IAD2026.Api.Middlewares;
 using IAD2026.Application;
 using IAD2026.Application.Options;
+using IAD2026.BackgroundJobs.Jobs;
+using IAD2026.BackgroundJobss.Options;
+using IAD2026.Domain.Entities;
 using IAD2026.Infrastructure;
+using IAD2026.Persistence;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
@@ -54,7 +61,10 @@ builder.Services
 builder.Host.UseSerilog((ctx, lc) =>
 {
     lc.ReadFrom.Configuration(ctx.Configuration)
-      .MinimumLevel.Warning()                    // ← Only Warnings + Errors
+      .MinimumLevel.Information()                                  // 1. Set global minimum back to Information
+      .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)     // 2. Mute noisy ASP.NET Core framework logs
+      .MinimumLevel.Override("System", LogEventLevel.Warning)        // 3. Mute system-level routing logs
+      .MinimumLevel.Override("Hangfire", LogEventLevel.Information)  // 4. (Optional) Explicitly ensure Hangfire is visible
       .WriteTo.Console()
       .WriteTo.File("logs/log-.txt",
           rollingInterval: RollingInterval.Day,
@@ -75,9 +85,9 @@ app.UseSwaggerUI();
 
 // ====================== ADD THIS ======================
 app.UseCors("AllowSwagger");
-// ======================================================
-//}
-
+// ====================== HANGFIRE DASHBOARD & SCHEDULING ======================
+// Simply call the extension!
+app.UseEnterpriseInitialization();
 app.UseSerilogRequestLogging(options =>
 {
     options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
