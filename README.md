@@ -10,8 +10,10 @@ A production-ready **.NET 10 Clean Architecture** template designed for enterpri
 - Modular design
 - Multiple external API integrations
 - Multiple database support
-- Background job processing
-- Structured logging
+- **Extensible Background Job Processing (Hangfire)**
+- **Transactional Outbox Pattern**
+- **Strategy Pattern Task Executors**
+- Structured logging (Serilog with Framework noise reduction)
 - Distributed caching ready
 - MediatR + FluentValidation
 - Repository pattern
@@ -56,6 +58,7 @@ flowchart TD
     API --> APP
 
     TESTS --> API
+
 ```
 
 ---
@@ -77,6 +80,7 @@ IAD2026.Infrastructure
 └── BackgroundJobs
 
 IAD2026.Tests
+
 ```
 
 ---
@@ -87,11 +91,11 @@ IAD2026.Tests
 
 Contains:
 
-- Entities
-- Value Objects
-- Domain Events
-- Domain Exceptions
-- Business Rules
+* Entities (e.g., `OutboxTask`)
+* Value Objects
+* Domain Events
+* Domain Exceptions
+* Business Rules
 
 Dependencies:
 
@@ -105,13 +109,13 @@ Contains reusable components shared across the solution.
 
 Examples:
 
-- Result<T>
-- Error
-- ApiResponse
-- Pagination
-- Common DTOs
-- Constants
-- Extensions
+* Result
+* Error
+* ApiResponse
+* Pagination
+* Common DTOs
+* Constants
+* Extensions
 
 Dependencies:
 
@@ -125,18 +129,18 @@ Contains all business use cases.
 
 Responsibilities:
 
-- CQRS (MediatR)
-- Commands
-- Queries
-- DTOs
-- Validation
-- Interfaces
-- Business orchestration
+* CQRS (MediatR)
+* Commands
+* Queries
+* DTOs
+* Validation
+* Interfaces (e.g., `ITaskExecutor`, `IOutboxRepository`)
+* Business orchestration
 
 Depends on:
 
-- Domain
-- Shared
+* Domain
+* Shared
 
 ---
 
@@ -148,16 +152,17 @@ Modules include:
 
 ### Persistence
 
-- Entity Framework Core
-- DbContexts
-- Repository implementations
-- Migrations
+* Entity Framework Core
+* DbContexts (e.g., `AppDbContext`)
+* Repository implementations (e.g., `OutboxRepository`)
+* Migrations
+* Optimized Table Indexes (e.g., O(1) Outbox lookups)
 
 Supports:
 
-- SQL Server
-- PostgreSQL
-- InMemory
+* SQL Server
+* PostgreSQL
+* InMemory
 
 ---
 
@@ -165,23 +170,24 @@ Supports:
 
 External services including:
 
-- OAuth2 APIs
-- API Key APIs
-- Session Authentication APIs
+* OAuth2 APIs
+* API Key APIs
+* Session Authentication APIs
 
 Examples:
 
-- SharePoint
-- SAP
-- CRM
-- Billing Systems
+* SharePoint
+* SAP
+* CRM
+* Billing Systems
+* Telecom SMS Gateways
 
 Includes:
 
-- Typed HttpClients
-- Polly resilience
-- Token providers
-- Credential providers
+* Typed HttpClients
+* Polly resilience (Circuit Breakers, Retries)
+* Token providers
+* Credential providers
 
 ---
 
@@ -189,14 +195,14 @@ Includes:
 
 Supports:
 
-- Memory Cache
-- Redis (future)
+* Memory Cache
+* Redis (future)
 
 Used for:
 
-- Tokens
-- Frequently accessed data
-- External API responses
+* Tokens
+* Frequently accessed data
+* External API responses
 
 ---
 
@@ -204,26 +210,27 @@ Used for:
 
 Structured logging using:
 
-- Serilog
-- Console
-- File
+* Serilog (with Microsoft/System namespace noise reduction)
+* Console
+* File
 
 Future:
 
-- Seq
-- Elastic
-- OpenTelemetry
+* Seq
+* ElasticSearch
+* OpenTelemetry
 
 ---
 
 ### Background Jobs
 
-Uses Hangfire for:
+Uses **Hangfire** powered by the **Transactional Outbox Pattern** and **Strategy Pattern** for:
 
-- Scheduled jobs
-- Retry jobs
-- Synchronization
-- Cleanup jobs
+* Scheduled jobs (e.g., Nightly Log Scrubbing)
+* High-throughput asynchronous event processing (e.g., Bulk SMS Dispatch)
+* At-least-once guaranteed execution
+* Automatic error retries and exponential backoff
+* Clean execution routing via `ITaskExecutor`
 
 ---
 
@@ -231,18 +238,19 @@ Uses Hangfire for:
 
 Responsibilities:
 
-- REST Endpoints
-- Carter Modules
-- Swagger
-- Middleware
-- Authentication
-- Dependency Injection
+* REST Endpoints
+* Carter Modules
+* Swagger
+* Middleware
+* Authentication
+* Dependency Injection (Composition Root)
 
 Contains:
 
-- Health endpoints
-- External API endpoints
-- Task endpoints
+* Health endpoints
+* External API endpoints
+* Task endpoints
+* Hangfire Dashboard (`/hangfire`)
 
 ---
 
@@ -250,8 +258,8 @@ Contains:
 
 Contains:
 
-- Unit Tests
-- Integration Tests
+* Unit Tests
+* Integration Tests
 
 ---
 
@@ -272,6 +280,7 @@ Infrastructure --> Integrations
 Infrastructure --> Logging
 Infrastructure --> Caching
 Infrastructure --> BackgroundJobs
+
 ```
 
 ---
@@ -280,19 +289,19 @@ Infrastructure --> BackgroundJobs
 
 Each external system is isolated behind:
 
-- Typed HttpClient
-- Credential Provider
-- Authentication Strategy
-- Resilience Policies
-- Logging
-- Caching
+* Typed HttpClient
+* Credential Provider
+* Authentication Strategy
+* Resilience Policies (Polly)
+* Logging
+* Caching
 
 Benefits:
 
-- Reusable
-- Testable
-- Maintainable
-- Easy to replace
+* Reusable
+* Testable
+* Maintainable
+* Easy to replace
 
 ---
 
@@ -302,65 +311,27 @@ Supports multiple databases.
 
 Examples:
 
-- SQL Server
-- PostgreSQL
-- SQLite (testing)
-- InMemory
+* SQL Server
+* PostgreSQL
+* SQLite (testing)
+* InMemory (Template default)
 
 Each bounded context may own its own DbContext.
-
----
-
-# Background Processing
-
-Hangfire is used for:
-
-- Data synchronization
-- Token refresh
-- Scheduled imports
-- Cleanup
-- Retry processing
-
----
-
-# Logging
-
-Uses Serilog with structured logging.
-
-Supports:
-
-- Correlation IDs
-- Request logging
-- Exception logging
-- Performance logging
-
----
-
-# Caching
-
-Current:
-
-- Memory Cache
-
-Future:
-
-- Redis
-- Distributed Cache
 
 ---
 
 # Technology Stack
 
 | Technology | Purpose |
-|------------|---------|
-| .NET 8 | Runtime |
+| --- | --- |
+| .NET 10 | Runtime |
 | ASP.NET Core | Web API |
 | Carter | Minimal API modules |
 | MediatR | CQRS |
 | FluentValidation | Validation |
 | Entity Framework Core | ORM |
 | Serilog | Logging |
-| Hangfire | Background Jobs |
+| Hangfire | Background Jobs & Outbox Engine |
 | Polly | Resilience |
 | StackExchange.Redis | Distributed Cache |
 | Mapster | Object Mapping |
@@ -369,14 +340,15 @@ Future:
 
 # Design Principles
 
-- Clean Architecture
-- Dependency Inversion
-- Separation of Concerns
-- SOLID
-- Modular Design
-- Plugin-based Integrations
-- Testability
-- High Maintainability
+* Clean Architecture
+* Dependency Inversion
+* Separation of Concerns
+* SOLID
+* Modular Design
+* Plugin-based Integrations (Strategy Pattern)
+* Testability
+* High Maintainability
+* Idempotency
 
 ---
 
@@ -394,9 +366,11 @@ Future:
 
 ✅ Persistence implementation
 
-🚧 Authentication
+✅ Background jobs (Hangfire + Outbox Pattern)
 
-🚧 Background jobs
+✅ Strategy Pattern Task Executors
+
+🚧 Authentication
 
 🚧 Caching
 
@@ -404,19 +378,25 @@ Future:
 
 # Future Roadmap
 
-- OAuth2 Provider Framework
-- Dynamic Plugin System
-- OpenTelemetry
-- Distributed Caching
-- Multi-database Transactions
-- API Gateway Support
-- Event Bus
-- Docker Compose
-- Kubernetes Deployment
-- CI/CD Pipeline
+* Centralized Log Aggregation (Seq/Elastic)
+* Redis Backed Hangfire Storage & Distributed Caching
+* Advanced MediatR Command/Query Segregation (CQRS)
+* OAuth2 Provider Framework
+* Dynamic Plugin System
+* OpenTelemetry
+* Multi-database Transactions
+* API Gateway Support
+* Event Bus Integration (RabbitMQ/Kafka)
+* Docker Compose
+* Kubernetes Deployment
+* CI/CD Pipeline
 
 ---
 
 # License
 
 Internal Enterprise Template
+
+```
+
+```
