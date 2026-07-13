@@ -390,9 +390,9 @@ Future:
 
 ✅ Module separation
 
-🚧 External API framework
+✅ External API framework
 
-🚧 Persistence implementation
+✅ Persistence implementation
 
 🚧 Authentication
 
