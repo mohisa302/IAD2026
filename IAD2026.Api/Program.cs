@@ -1,8 +1,12 @@
 using Carter;
+using Hangfire;
 using IAD2026.Api.Middlewares;
 using IAD2026.Application;
 using IAD2026.Application.Options;
+using IAD2026.BackgroundJobs.Jobs;
+using IAD2026.BackgroundJobss.Options;
 using IAD2026.Infrastructure;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
@@ -75,8 +79,19 @@ app.UseSwaggerUI();
 
 // ====================== ADD THIS ======================
 app.UseCors("AllowSwagger");
-// ======================================================
-//}
+// ====================== HANGFIRE DASHBOARD & SCHEDULING ======================
+
+// 1. Enable the Hangfire Dashboard UI
+app.UseHangfireDashboard("/hangfire");
+
+// 2. Retrieve the dynamically configured Cron settings
+var hangfireSettings = app.Services.GetRequiredService<IOptions<HangfireSettings>>().Value;
+
+// 3. Register the recurring job that polls your database outbox
+RecurringJob.AddOrUpdate<OutboxProcessorJob>(
+    "outbox-distributor-job",
+    job => job.DistributePendingTasksAsync(CancellationToken.None),
+    hangfireSettings.SmsQueueProcessorCron);
 
 app.UseSerilogRequestLogging(options =>
 {

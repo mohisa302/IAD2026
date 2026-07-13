@@ -23,7 +23,7 @@ public static class DependencyInjection
 
         services.AddLoggingModule(configuration);
 
-        services.AddBackgroundJobs();
+        services.AddBackgroundJobs(configuration);
 
         return services;
     }

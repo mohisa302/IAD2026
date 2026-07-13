@@ -17,6 +17,7 @@ public static class DependencyInjection
                 options.UseInMemoryDatabase("IAD2026InMemoryDb"));
         // Register generic repository
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
         return services;
     }
 }
