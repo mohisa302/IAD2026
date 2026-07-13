@@ -5,7 +5,9 @@ using IAD2026.Application;
 using IAD2026.Application.Options;
 using IAD2026.BackgroundJobs.Jobs;
 using IAD2026.BackgroundJobss.Options;
+using IAD2026.Domain.Entities;
 using IAD2026.Infrastructure;
+using IAD2026.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using Serilog;
@@ -58,7 +60,10 @@ builder.Services
 builder.Host.UseSerilog((ctx, lc) =>
 {
     lc.ReadFrom.Configuration(ctx.Configuration)
-      .MinimumLevel.Warning()                    // ← Only Warnings + Errors
+      .MinimumLevel.Information()                                  // 1. Set global minimum back to Information
+      .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)     // 2. Mute noisy ASP.NET Core framework logs
+      .MinimumLevel.Override("System", LogEventLevel.Warning)        // 3. Mute system-level routing logs
+      .MinimumLevel.Override("Hangfire", LogEventLevel.Information)  // 4. (Optional) Explicitly ensure Hangfire is visible
       .WriteTo.Console()
       .WriteTo.File("logs/log-.txt",
           rollingInterval: RollingInterval.Day,
@@ -70,7 +75,34 @@ builder.Services.Configure<ExternalApiOptions>(
     builder.Configuration.GetSection("ExternalSystems"));
 
 var app = builder.Build();
+// ====================== SEED DUMMY DATA ======================
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
 
+    // Insert fake tasks if the queue is empty
+    if (!db.TaskQueue.Any())
+    {
+        db.TaskQueue.AddRange(
+            new OutboxTask
+            {
+                TaskType = "SmsNotification",
+                ReferenceId = Guid.NewGuid().ToString(),
+                Status = OutboxTaskStatus.Pending,
+                Payload = "Test SMS Payload"
+            },
+            new OutboxTask
+            {
+                TaskType = "DataScrubbing",
+                ReferenceId = Guid.NewGuid().ToString(),
+                Status = OutboxTaskStatus.Pending,
+                Payload = "Test Scrubbing Payload"
+            }
+        );
+        db.SaveChanges();
+    }
+}
 // === Middleware Pipeline ===
 //if (app.Environment.IsDevelopment())
 //{
