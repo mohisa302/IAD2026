@@ -21,10 +21,11 @@ public class OutboxProcessorJob
         _executors = executors.ToDictionary(e => e.TaskType, StringComparer.OrdinalIgnoreCase);
     }
 
-    [AutomaticRetry(Attempts = 0)]
-    public async Task DistributePendingTasksAsync(CancellationToken cancellationToken)
+    // Update this signature
+    public async Task DistributePendingTasksAsync(string taskType, CancellationToken cancellationToken)
     {
-        var pendingTasks = await _repository.GetPendingTasksAsync(100, cancellationToken);
+        // Update the repository call to filter by type
+        var pendingTasks = await _repository.GetTasksByTypeAsync(taskType, 100, cancellationToken);
 
         if (!pendingTasks.Any()) return;
 
@@ -33,12 +34,12 @@ public class OutboxProcessorJob
             task.Status = OutboxTaskStatus.Processing;
             await _repository.UpdateTaskAsync(task, cancellationToken);
         }
-
         await _repository.SaveChangesAsync(cancellationToken);
 
         var backgroundClient = new BackgroundJobClient();
         foreach (var task in pendingTasks)
         {
+            // Enqueue individual execution
             backgroundClient.Enqueue<OutboxProcessorJob>(job => job.ProcessSingleTaskAsync(task.Id, CancellationToken.None));
         }
     }

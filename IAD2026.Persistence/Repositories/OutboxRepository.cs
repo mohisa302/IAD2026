@@ -12,16 +12,17 @@ public class OutboxRepository : IOutboxRepository
     {
         _context = context;
     }
-
-    public Task<List<OutboxTask>> GetPendingTasksAsync(int batchSize, CancellationToken cancellationToken)
+    public async Task<List<OutboxTask>> GetTasksByTypeAsync(string type, int batchSize, CancellationToken cancellationToken)
     {
-        return _context.TaskQueue
-            .Where(t => t.Status == OutboxTaskStatus.Pending && t.RetryCount < 3)
+        return await _context.TaskQueue
+            .Where(t => t.TaskType == type &&
+                        t.Status == OutboxTaskStatus.Pending &&
+                        t.RetryCount < 3)
             .OrderBy(t => t.CreatedAt)
             .Take(batchSize)
             .ToListAsync(cancellationToken);
     }
-
+ 
     public async Task<OutboxTask?> GetTaskByIdAsync(string taskId, CancellationToken cancellationToken)
     {
         return await _context.TaskQueue.FindAsync(new object[] { taskId }, cancellationToken);
