@@ -5,6 +5,8 @@ using System.Text.Json;
 using IAD2026.Application.Exceptions;
 using IAD2026.Application.Interfaces;
 using IAD2026.Shared;
+using IAD2026.Shared.Models;
+using Microsoft.Extensions.Logging;   // ← Use this
 
 namespace IAD2026.Integrations.Clients;
 
@@ -12,13 +14,16 @@ public class ResilientExternalApiClient : IExternalApiClient
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IExternalCredentialProvider _credentialProvider;
+    private readonly ILogger<ResilientExternalApiClient> _logger;   // ← Injected logger
 
     public ResilientExternalApiClient(
         IHttpClientFactory httpClientFactory,
-        IExternalCredentialProvider credentialProvider)
+        IExternalCredentialProvider credentialProvider,
+        ILogger<ResilientExternalApiClient> logger)
     {
         _httpClientFactory = httpClientFactory;
         _credentialProvider = credentialProvider;
+        _logger = logger;
     }
 
     // ==================== Strongly Typed ====================
@@ -28,7 +33,7 @@ public class ResilientExternalApiClient : IExternalApiClient
         var client = CreateClient(credential);
 
         var response = await client.GetAsync(endpoint, ct);
-        await EnsureSuccessStatusAsync(response);
+        await EnsureSuccessStatusAsync(response, systemKey, endpoint, null);
 
         var content = await response.Content.ReadAsStringAsync(ct);
         return JsonSerializer.Deserialize<TResponse>(content, new JsonSerializerOptions
@@ -42,11 +47,11 @@ public class ResilientExternalApiClient : IExternalApiClient
         var credential = await _credentialProvider.GetCredentialAsync(systemKey, ct);
         var client = CreateClient(credential);
 
-        var json = JsonSerializer.Serialize(body);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var requestBodyJson = JsonSerializer.Serialize(body);
+        var content = new StringContent(requestBodyJson, Encoding.UTF8, "application/json");
 
         var response = await client.PostAsync(endpoint, content, ct);
-        await EnsureSuccessStatusAsync(response);
+        await EnsureSuccessStatusAsync(response, systemKey, endpoint, requestBodyJson);
 
         var responseContent = await response.Content.ReadAsStringAsync(ct);
         return JsonSerializer.Deserialize<TResponse>(responseContent, new JsonSerializerOptions
@@ -62,7 +67,7 @@ public class ResilientExternalApiClient : IExternalApiClient
         var client = CreateClient(credential);
 
         var response = await client.GetAsync(endpoint, ct);
-        await EnsureSuccessStatusAsync(response);
+        await EnsureSuccessStatusAsync(response, systemKey, endpoint, null);
 
         var content = await response.Content.ReadAsStringAsync(ct);
         using var doc = JsonDocument.Parse(content);
@@ -74,35 +79,15 @@ public class ResilientExternalApiClient : IExternalApiClient
         var credential = await _credentialProvider.GetCredentialAsync(systemKey, ct);
         var client = CreateClient(credential);
 
-        var json = JsonSerializer.Serialize(body);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var requestBodyJson = JsonSerializer.Serialize(body);
+        var content = new StringContent(requestBodyJson, Encoding.UTF8, "application/json");
 
         var response = await client.PostAsync(endpoint, content, ct);
-        await EnsureSuccessStatusAsync(response);
+        await EnsureSuccessStatusAsync(response, systemKey, endpoint, requestBodyJson);
 
         var responseContent = await response.Content.ReadAsStringAsync(ct);
         using var doc = JsonDocument.Parse(responseContent);
         return doc.RootElement.Clone();
-    }
-
-    // ==================== Paginated ====================
-    public async Task<PagedResponse<T>> GetPagedAsync<T>(string systemKey, string endpoint, int page = 1, int pageSize = 20, CancellationToken ct = default)
-    {
-        var credential = await _credentialProvider.GetCredentialAsync(systemKey, ct);
-        var client = CreateClient(credential);
-
-        var pagedEndpoint = $"{endpoint}?page={page}&pageSize={pageSize}";
-
-        var response = await client.GetAsync(pagedEndpoint, ct);
-        await EnsureSuccessStatusAsync(response);
-
-        var content = await response.Content.ReadAsStringAsync(ct);
-        var pagedResult = JsonSerializer.Deserialize<PagedResponse<T>>(content, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
-        return pagedResult ?? PagedResponse<T>.Error("PARSING_ERROR", "Failed to parse paginated response", 500);
     }
 
     // ==================== Private Helpers ====================
@@ -118,19 +103,19 @@ public class ResilientExternalApiClient : IExternalApiClient
     {
         client.DefaultRequestHeaders.Clear();
 
-        switch (credential.AuthType.ToLowerInvariant())
+        switch (credential.AuthType)
         {
-            case "apikey":
+            case AuthType.ApiKey:
                 if (!string.IsNullOrEmpty(credential.ApiKey))
                     client.DefaultRequestHeaders.Add("X-Api-Key", credential.ApiKey);
                 break;
 
-            case "bearer":
+            case AuthType.Bearer:
                 if (!string.IsNullOrEmpty(credential.Token))
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", credential.Token);
                 break;
 
-            case "basic":
+            case AuthType.Basic:
                 if (!string.IsNullOrEmpty(credential.Username) && !string.IsNullOrEmpty(credential.Password))
                 {
                     var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{credential.Username}:{credential.Password}"));
@@ -140,19 +125,29 @@ public class ResilientExternalApiClient : IExternalApiClient
         }
     }
 
-    private static async Task EnsureSuccessStatusAsync(HttpResponseMessage response)
+    // ==================== ONLY LOG ON EXCEPTION ====================
+    private async Task EnsureSuccessStatusAsync(HttpResponseMessage response, string systemKey, string endpoint, string? requestBody)
     {
         if (response.IsSuccessStatusCode)
             return;
 
-        var content = await response.Content.ReadAsStringAsync();
-        var errorMessage = string.IsNullOrWhiteSpace(content)
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        // Log only failures with full details
+        _logger.LogError("External API Error | System: {SystemKey} | Endpoint: {Endpoint} | Status: {StatusCode} | RequestBody: {RequestBody} | ResponseBody: {ResponseBody}",
+            systemKey, endpoint, (int)response.StatusCode, requestBody ?? "N/A", responseBody);
+
+        var errorMessage = string.IsNullOrWhiteSpace(responseBody)
             ? $"External API returned {(int)response.StatusCode} {response.ReasonPhrase}"
-            : content;
+            : responseBody;
 
         var errorCode = GetErrorCode(response.StatusCode);
 
-        throw new ExternalApiException(errorMessage, response.StatusCode, errorCode);
+        throw new ExternalApiException(errorMessage, response.StatusCode, errorCode)
+        {
+            RawRequest = requestBody,
+            RawResponse = responseBody
+        };
     }
 
     private static string GetErrorCode(HttpStatusCode statusCode) => statusCode switch

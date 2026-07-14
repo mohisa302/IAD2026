@@ -12,11 +12,33 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // For now we use In-Memory for template. Later we will add real DB.
         services.AddDbContext<AppDbContext>(options =>
                 options.UseInMemoryDatabase("IAD2026InMemoryDb"));
-        // Register generic repository
+
+        // 1. Register generic repository explicitly
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+
+        // 2. Auto-Register all custom repositories using Reflection
+        var persistenceAssembly = typeof(DependencyInjection).Assembly;
+
+        var repositoryTypes = persistenceAssembly.GetTypes()
+            .Where(t => t.IsClass
+                     && !t.IsAbstract
+                     && t.Name.EndsWith("Repository")
+                     && t.Name != "EfRepository`1"); // Exclude generic base
+
+        foreach (var type in repositoryTypes)
+        {
+            // Find the matching interface (e.g., OutboxRepository -> IOutboxRepository)
+            var interfaceType = type.GetInterfaces()
+                .FirstOrDefault(i => i.Name == $"I{type.Name}");
+
+            if (interfaceType != null)
+            {
+                services.AddScoped(interfaceType, type);
+            }
+        }
+
         return services;
     }
 }

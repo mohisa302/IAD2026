@@ -1,4 +1,4 @@
-﻿namespace IAD2026.Domain.Entities;
+﻿namespace IAD2026.Domain.ValueObjects;
 
 public abstract class ValueObject
 {
