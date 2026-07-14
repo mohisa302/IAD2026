@@ -14,51 +14,36 @@ public class PaginatedFetcher : IPaginatedFetcher
         int defaultPageSize = 100,
         CancellationToken ct = default)
     {
-        int currentPage = 1;
+        int offset = 0;
         int totalCount = 0;
 
 
         while (true)
         {
-            var pageJson =
-                await getPageAsync(
-                    currentPage,
-                    defaultPageSize,
-                    ct);
+            var pageJson = await getPageAsync(
+                offset,
+                defaultPageSize,
+                ct);
 
 
-
-            if (currentPage == 1 &&
-               pageJson.TryGetProperty(
-                   totalPropertyName,
-                   out var total))
+            if (offset == 0 &&
+                pageJson.TryGetProperty(totalPropertyName, out var total))
             {
                 totalCount = total.GetInt32();
             }
 
 
-
-            // IMPORTANT
-            // Pass the whole response
             await savePageAsync(
                 pageJson,
-                currentPage,
+                offset,
                 ct);
 
 
-
-            if (pageJson.TryGetProperty("devices", out var devices))
-            {
-                if (devices.GetArrayLength() == 0)
-                    break;
+            offset += defaultPageSize;
 
 
-                if (currentPage * defaultPageSize >= totalCount)
-                    break;
-            }
-
-
-            currentPage++;
+            if (offset >= totalCount)
+                break;
         }
     }
     public async Task<List<T>> FetchAllAsync<T>(

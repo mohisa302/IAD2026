@@ -2,13 +2,6 @@
 
 public enum DcimType
 {
-    VirtualInfrastructure = 1,
+    VI = 2,
 
-    Rack = 2,
-
-    Device = 3,
-
-    IP = 4,
-
-    Network = 5
 }

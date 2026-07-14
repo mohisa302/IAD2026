@@ -17,8 +17,6 @@ public class DcimModule : ICarterModule
             app.MapGroup("/api/dcim")
                .WithTags("DCIM");
 
-
-
         group.MapPost("/snapshot",
             async (
                 DcimType type,

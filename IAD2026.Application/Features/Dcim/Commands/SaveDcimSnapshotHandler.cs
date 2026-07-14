@@ -43,31 +43,35 @@ public class SaveDcimSnapshotHandler
                 request.DcimType);
 
 
-            int pagesSaved = 0;
-
+            int snapshotsSaved = 0;
+            var currentDate = DateTime.UtcNow;
 
             await _fetcher.FetchAllRawAsync(
-                async (page, pageSize, token) =>
+
+                // Fetch page
+                async (offset, limit, token) =>
                 {
-                    var offset =
-                        (page - 1) * pageSize;
-
-
                     return await _apiClient.GetDynamicAsync(
                         "DCIM",
-                        $"{endpoint}?limit={pageSize}&offset={offset}",
+                        $"{endpoint}?limit={limit}&offset={offset}",
                         token);
                 },
 
 
-                async (response, page, token) =>
+                // Save raw response
+                async (response, offset, token) =>
                 {
                     var snapshot = new DcimSnapshot
                     {
                         JsonBody = response.GetRawText(),
+
                         DcimType = request.DcimType,
-                        //PageNumber = page,
-                        CurrentDate = DateTime.UtcNow
+
+                        CurrentDate = currentDate,
+
+                        PageSize = 5,
+
+                        PageNumber = offset
                     };
 
 
@@ -76,32 +80,33 @@ public class SaveDcimSnapshotHandler
                         token);
 
 
-                    pagesSaved++;
+                    snapshotsSaved++;
 
 
                     _logger.LogInformation(
-                        "Saved DCIM page {Page} for {Type}",
-                        page,
+                        "Saved DCIM snapshot offset {Offset} for {Type}",
+                        offset,
                         request.DcimType);
                 },
 
 
                 totalPropertyName: "total_count",
                 defaultPageSize: 5,
-                ct);
+                ct: ct);
 
 
             return ApiResponse<object?>.Success(new
             {
                 DcimType = request.DcimType,
-                PagesSaved = pagesSaved
+                SnapshotsSaved = snapshotsSaved
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(
                 ex,
-                "Failed saving DCIM snapshot");
+                "Failed saving DCIM snapshot for {Type}",
+                request.DcimType);
 
 
             return ApiResponse<object?>
@@ -117,20 +122,8 @@ public class SaveDcimSnapshotHandler
     {
         return type switch
         {
-            DcimType.VirtualInfrastructure =>
+            DcimType.VI =>
                 "/its/portal/vi",
-
-            DcimType.Rack =>
-                "/its/portal/rack",
-
-            DcimType.Device =>
-                "/its/portal/device",
-
-            DcimType.IP =>
-                "/its/portal/ip",
-
-            DcimType.Network =>
-                "/its/portal/network",
 
             _ =>
                 throw new ArgumentOutOfRangeException(nameof(type))
