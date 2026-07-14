@@ -2,9 +2,8 @@
 
 namespace IAD2026.Application.Options;
 
-public class ExternalApiOptions
+public class ExternalApiOptions : Dictionary<string, ExternalSystemOptions>
 {
-    public Dictionary<string, ExternalSystemOptions> Systems { get; set; } = new();
 }
 
 public class ExternalSystemOptions

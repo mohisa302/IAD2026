@@ -46,3 +46,4 @@ packages/
 
 *.logs
 /IAD2026.Api/logs
+/IAD2026.Persistence/Migrations

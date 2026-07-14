@@ -6,8 +6,17 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
+
     }
 
     // Add your DbSets here later
     public DbSet<OutboxTask> TaskQueue { get; set; }
+    public DbSet<DcimSnapshot> DcimSnapshots => Set<DcimSnapshot>();
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Automatically apply all configurations in this assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
 }

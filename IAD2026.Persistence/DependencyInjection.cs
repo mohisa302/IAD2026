@@ -13,7 +13,9 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase("IAD2026InMemoryDb"));
+        options.UseSqlServer(
+            configuration.GetConnectionString("DefaultConnection")));
+
 
         // 1. Register generic repository explicitly
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));

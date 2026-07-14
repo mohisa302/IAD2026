@@ -72,8 +72,19 @@ builder.Host.UseSerilog((ctx, lc) =>
 });
 
 // Register strongly-typed options
+// Register strongly typed options
 builder.Services.Configure<ExternalApiOptions>(
     builder.Configuration.GetSection("ExternalSystems"));
+
+// Debug
+var options = builder.Configuration
+    .GetSection("ExternalSystems")
+    .GetChildren();
+
+foreach (var child in options)
+{
+    Console.WriteLine($"System: {child.Key}");
+}
 
 var app = builder.Build();
 

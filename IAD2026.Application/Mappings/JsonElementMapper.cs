@@ -7,7 +7,18 @@ public static class JsonElementMapper
 {
     public static T Map<T>(JsonElement element) where T : new()
     {
+
         var instance = new T();
+
+        // Special case:
+        var jsonProperty = typeof(T).GetProperty("Json");
+
+        if (jsonProperty != null &&
+            jsonProperty.PropertyType == typeof(string))
+        {
+            jsonProperty.SetValue(instance, element.GetRawText());
+            return instance;
+        }
         MapProperties(element, instance);
         return instance;
     }

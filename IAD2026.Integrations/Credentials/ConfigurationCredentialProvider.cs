@@ -9,19 +9,23 @@ public class ConfigurationCredentialProvider : IExternalCredentialProvider
 {
     private readonly ExternalApiOptions _options;
 
-    public ConfigurationCredentialProvider(IOptions<ExternalApiOptions> options)
+    public ConfigurationCredentialProvider(
+        IOptions<ExternalApiOptions> options)
     {
         _options = options.Value;
     }
 
-    public Task<ApiCredential> GetCredentialAsync(string systemKey, CancellationToken ct = default)
+    public Task<ApiCredential> GetCredentialAsync(
+        string systemKey,
+        CancellationToken ct = default)
     {
-        if (!_options.Systems.TryGetValue(systemKey, out var system))
+        if (!_options.TryGetValue(systemKey, out var system))
         {
-            throw new InvalidOperationException($"External system '{systemKey}' is not configured in ExternalSystems section.");
+            throw new InvalidOperationException(
+                $"External system '{systemKey}' is not configured in ExternalSystems section.");
         }
 
-        // Validate AuthType
+
         if (!Enum.IsDefined(typeof(AuthType), system.AuthType))
         {
             throw new InvalidOperationException(
@@ -29,12 +33,13 @@ public class ConfigurationCredentialProvider : IExternalCredentialProvider
                 "Allowed values: ApiKey, Bearer, Basic.");
         }
 
+
         var credential = new ApiCredential(
             SystemKey: systemKey,
             BaseUrl: system.BaseUrl,
             AuthType: system.AuthType,
             ApiKey: system.ApiKey,
-            ApiKeyHeaderName: system.ApiKeyHeaderName,   // ← Comes from config
+            ApiKeyHeaderName: system.ApiKeyHeaderName,
             Username: system.Username,
             Password: system.Password
         );

@@ -10,4 +10,11 @@ public interface IPaginatedFetcher
         string? totalPropertyName = null,
         int defaultPageSize = 50,
         CancellationToken ct = default) where T : new();
+
+    Task FetchAllRawAsync(
+    Func<int, int, CancellationToken, Task<JsonElement>> getPageAsync,
+    Func<JsonElement, int, CancellationToken, Task> savePageAsync,
+    string totalPropertyName = "total_count",
+    int defaultPageSize = 100,
+    CancellationToken ct = default);
 }
