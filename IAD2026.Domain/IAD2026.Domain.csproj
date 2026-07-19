@@ -8,6 +8,7 @@
     <Folder Include="Common\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Entities\DcimData.cs" />
     <None Include="Entities\OutboxTask.cs" />
   </ItemGroup>
 

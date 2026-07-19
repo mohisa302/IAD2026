@@ -15,10 +15,10 @@ public class DcimRepository : IDcimRepository
 
 
     public async Task AddAsync(
-        DcimSnapshot snapshot,
+        DcimData snapshot,
         CancellationToken ct = default)
     {
-        await _context.DcimSnapshots.AddAsync(snapshot, ct);
+        await _context.DcimData.AddAsync(snapshot, ct);
 
         await _context.SaveChangesAsync(ct);
     }

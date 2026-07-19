@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace IAD2026.Infrastructure.Persistence.Configurations;
 
-public class DcimSnapshotConfiguration
-    : IEntityTypeConfiguration<DcimSnapshot>
+public class DcimDataConfiguration
+    : IEntityTypeConfiguration<DcimData>
 {
-    public void Configure(EntityTypeBuilder<DcimSnapshot> builder)
+    public void Configure(EntityTypeBuilder<DcimData> builder)
     {
-        builder.ToTable("DcimSnapshots");
+        builder.ToTable("Dcim_Data");
 
         builder.HasKey(x => x.Id);
 

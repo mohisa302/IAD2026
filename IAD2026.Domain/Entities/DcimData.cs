@@ -2,7 +2,7 @@
 
 namespace IAD2026.Domain.Entities;
 
-public class DcimSnapshot: BaseEntity
+public class DcimData: BaseEntity
 {
     public string JsonBody { get; set; } = string.Empty;
     public DcimType DcimType { get; set; }

@@ -11,7 +11,7 @@ public class AppDbContext : DbContext
 
     // Add your DbSets here later
     public DbSet<OutboxTask> TaskQueue { get; set; }
-    public DbSet<DcimSnapshot> DcimSnapshots => Set<DcimSnapshot>();
+    public DbSet<DcimData> DcimData => Set<DcimData>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

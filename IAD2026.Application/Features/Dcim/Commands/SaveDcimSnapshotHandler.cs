@@ -69,7 +69,7 @@ public class SaveDcimSnapshotHandler
                 // Save raw response
                 async (response, offset, token) =>
                 {
-                    var snapshot = new DcimSnapshot
+                    var snapshot = new DcimData
                     {
                         JsonBody = response.GetRawText(),
 

@@ -5,6 +5,6 @@ namespace IAD2026.Application.Interfaces;
 public interface IDcimRepository
 {
     Task AddAsync(
-        DcimSnapshot snapshot,
+        DcimData snapshot,
         CancellationToken ct = default);
 }
