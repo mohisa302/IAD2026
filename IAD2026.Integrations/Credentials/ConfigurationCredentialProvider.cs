@@ -15,15 +15,12 @@ public class ConfigurationCredentialProvider : IExternalCredentialProvider
         _options = options.Value;
     }
 
+
     public Task<ApiCredential> GetCredentialAsync(
         string systemKey,
         CancellationToken ct = default)
     {
-        if (!_options.TryGetValue(systemKey, out var system))
-        {
-            throw new InvalidOperationException(
-                $"External system '{systemKey}' is not configured in ExternalSystems section.");
-        }
+        var system = GetSystem(systemKey);
 
 
         if (!Enum.IsDefined(typeof(AuthType), system.AuthType))
@@ -44,6 +41,21 @@ public class ConfigurationCredentialProvider : IExternalCredentialProvider
             Password: system.Password
         );
 
+
         return Task.FromResult(credential);
+    }
+
+
+    private ExternalSystemOptions GetSystem(string systemKey)
+    {
+        return systemKey.ToLowerInvariant() switch
+        {
+            "icare" => _options.Icare,
+
+            "dcim" => _options.DCIM,
+
+            _ => throw new InvalidOperationException(
+                $"External system '{systemKey}' is not configured in ExternalSystems section.")
+        };
     }
 }

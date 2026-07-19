@@ -1,10 +1,12 @@
 ﻿using IAD2026.Application.Interfaces;
+using IAD2026.Application.Options;
 using IAD2026.Application.Services;
 using IAD2026.Domain.Entities;
 using IAD2026.Domain.Enums;
 using IAD2026.Shared;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace IAD2026.Application.Features.Dcim.Commands;
 
@@ -15,18 +17,22 @@ public class SaveDcimSnapshotHandler
     private readonly IPaginatedFetcher _fetcher;
     private readonly IDcimRepository _repository;
     private readonly ILogger<SaveDcimSnapshotHandler> _logger;
+    private readonly DcimSystemOptions _dcimOptions;
 
 
     public SaveDcimSnapshotHandler(
         IExternalApiClient apiClient,
         IPaginatedFetcher fetcher,
         IDcimRepository repository,
-        ILogger<SaveDcimSnapshotHandler> logger)
+        ILogger<SaveDcimSnapshotHandler> logger,
+        IOptions<ExternalApiOptions> externalOptions)
     {
         _apiClient = apiClient;
         _fetcher = fetcher;
         _repository = repository;
         _logger = logger;
+
+        _dcimOptions = externalOptions.Value.DCIM;
     }
 
 
@@ -44,7 +50,9 @@ public class SaveDcimSnapshotHandler
 
 
             int snapshotsSaved = 0;
+
             var currentDate = DateTime.UtcNow;
+
 
             await _fetcher.FetchAllRawAsync(
 
@@ -69,7 +77,7 @@ public class SaveDcimSnapshotHandler
 
                         CurrentDate = currentDate,
 
-                        PageSize = 5,
+                        PageSize = _dcimOptions.Limit,
 
                         PageNumber = offset
                     };
@@ -91,13 +99,16 @@ public class SaveDcimSnapshotHandler
 
 
                 totalPropertyName: "total_count",
-                defaultPageSize: 5,
+
+                defaultPageSize: _dcimOptions.Limit,
+
                 ct: ct);
+
 
 
             return ApiResponse<object?>.Success(new
             {
-                DcimType = request.DcimType,
+                request.DcimType,
                 SnapshotsSaved = snapshotsSaved
             });
         }
@@ -118,15 +129,20 @@ public class SaveDcimSnapshotHandler
     }
 
 
-    private static string GetEndpoint(DcimType type)
-    {
-        return type switch
-        {
-            DcimType.VI =>
-                "/its/portal/vi",
 
-            _ =>
-                throw new ArgumentOutOfRangeException(nameof(type))
-        };
+    private string GetEndpoint(DcimType type)
+    {
+        var endpoint = _dcimOptions.Endpoints
+            .FirstOrDefault(x => x.DcimType == type);
+
+
+        if (endpoint is null)
+        {
+            throw new InvalidOperationException(
+                $"No endpoint configured for DCIM type '{type}'.");
+        }
+
+
+        return endpoint.ServicePath;
     }
 }
