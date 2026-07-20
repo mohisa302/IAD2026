@@ -36,6 +36,18 @@ public class ResilientExternalApiClient : IExternalApiClient
         await EnsureSuccessStatusAsync(response, systemKey, endpoint, null);
 
         var content = await response.Content.ReadAsStringAsync(ct);
+        _logger.LogInformation(
+    "Response string length: {Length}",
+    content.Length);
+
+_logger.LogInformation(
+    "Response starts with: {Start}",
+    content[..Math.Min(200, content.Length)]);
+
+_logger.LogInformation(
+    "Response ends with: {End}",
+    content[^Math.Min(200, content.Length)..]);
+
         return JsonSerializer.Deserialize<TResponse>(content, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true

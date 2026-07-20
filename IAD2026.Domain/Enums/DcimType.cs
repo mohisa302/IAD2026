@@ -2,6 +2,10 @@
 
 public enum DcimType
 {
-    VI = 2,
+    INTEL=0,
+    UNIX=1,
+    VI=2,
+    STORAGE=3,
+    PYSICAL=4
 
 }

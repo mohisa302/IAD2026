@@ -66,9 +66,16 @@ public class SaveDcimSnapshotHandler
                 },
 
 
+
                 // Save raw response
                 async (response, offset, token) =>
                 {
+                    var rawJson = response.GetRawText();
+
+                    _logger.LogInformation(
+                        "Offset {Offset}, JSON Length = {Length}",
+                        offset,
+                        rawJson.Length);
                     var snapshot = new DcimData
                     {
                         JsonBody = response.GetRawText(),
@@ -89,6 +96,7 @@ public class SaveDcimSnapshotHandler
 
 
                     snapshotsSaved++;
+
 
 
                     _logger.LogInformation(
