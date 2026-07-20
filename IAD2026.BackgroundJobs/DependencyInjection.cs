@@ -3,7 +3,7 @@ using Hangfire.InMemory; // Or Hangfire.SqlServer for production
 using IAD2026.Application.Interfaces;
 using IAD2026.BackgroundJobs.Executors;
 using IAD2026.BackgroundJobs.Jobs;
-using IAD2026.BackgroundJobss.Options;
+using IAD2026.BackgroundJobs.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,7 +27,7 @@ public static class DependencyInjection
         services.AddScoped<ITaskExecutor, SmsNotificationExecutor>();
         services.AddScoped<ITaskExecutor, DatabaseRetentionExecutor>();
         services.AddScoped<OutboxProcessorJob>();
-
+        services.AddScoped<SwitchPortSyncJob>();
         // 3. Register the Hangfire Hosted Server (this node will actively process jobs)
         services.AddHangfireServer(options =>
         {

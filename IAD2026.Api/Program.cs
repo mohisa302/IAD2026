@@ -5,7 +5,7 @@ using IAD2026.Api.Middlewares;
 using IAD2026.Application;
 using IAD2026.Application.Options;
 using IAD2026.BackgroundJobs.Jobs;
-using IAD2026.BackgroundJobss.Options;
+using IAD2026.BackgroundJobs.Options;
 using IAD2026.Domain.Entities;
 using IAD2026.Infrastructure;
 using IAD2026.Persistence;
