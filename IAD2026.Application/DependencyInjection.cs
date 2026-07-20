@@ -1,4 +1,5 @@
-﻿using IAD2026.Application.Services;
+﻿using IAD2026.Application.Interfaces;
+using IAD2026.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace IAD2026.Application;
@@ -13,7 +14,7 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
         });
         services.AddScoped<IPaginatedFetcher, PaginatedFetcher>();
-
+        services.AddScoped<ISwitchPortSyncService, SwitchPortSyncService>();
         return services;
     }
 }
