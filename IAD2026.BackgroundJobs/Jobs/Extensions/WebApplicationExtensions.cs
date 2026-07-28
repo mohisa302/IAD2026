@@ -1,8 +1,10 @@
-﻿using IAD2026.BackgroundJobs.Jobs;
+﻿using IAD2026.Application.Interfaces;
+using IAD2026.BackgroundJobs.Jobs;
+using IAD2026.BackgroundJobs.Options;
+using IAD2026.Domain.Entities;
 using IAD2026.Persistence;
 using Hangfire;
 using Microsoft.Extensions.Options;
-using IAD2026.BackgroundJobs.Options;
 
 namespace IAD2026.Api.Extensions;
 
