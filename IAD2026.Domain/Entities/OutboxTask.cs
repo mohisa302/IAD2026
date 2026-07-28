@@ -1,4 +1,6 @@
-﻿namespace IAD2026.Domain.Entities;
+﻿using IAD2026.Domain.Enums;
+
+namespace IAD2026.Domain.Entities;
 
 public class OutboxTask : BaseEntity
 {

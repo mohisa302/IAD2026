@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Hangfire;
 using IAD2026.Application.Interfaces;
-using IAD2026.Domain.Entities;
+using IAD2026.Domain.Enums;
 
 namespace IAD2026.BackgroundJobs.Jobs;
 

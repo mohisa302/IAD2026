@@ -2,7 +2,7 @@
 using IAD2026.Domain.Entities;
 using IAD2026.Persistence;
 
-namespace IAD2026.Infrastructure.Repositories;
+namespace IAD2026.Persistence.Repositories;
 
 public class DcimRepository : IDcimRepository
 {

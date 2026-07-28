@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace IAD2026.Infrastructure.Persistence.Configurations;
+namespace IAD2026.Persistence.Configurations;
 
 public class DcimDataConfiguration
     : IEntityTypeConfiguration<DcimData>

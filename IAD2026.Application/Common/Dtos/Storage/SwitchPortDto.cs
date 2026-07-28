@@ -1,6 +1,6 @@
 using IAD2026.Application.Attributes;
 using IAD2026.Application.Mappings;
-namespace IAD2026.Application.Dtos.Storage;
+namespace IAD2026.Application.Common.Dtos.Storage;
 
 [PaginatedResponse(
     ItemsProperty = "switchports",
