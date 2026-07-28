@@ -5,7 +5,7 @@ using IAD2026.Api.Middlewares;
 using IAD2026.Application;
 using IAD2026.Application.Options;
 using IAD2026.BackgroundJobs.Jobs;
-using IAD2026.BackgroundJobss.Options;
+using IAD2026.BackgroundJobs.Options;
 using IAD2026.Domain.Entities;
 using IAD2026.Infrastructure;
 using IAD2026.Persistence;
@@ -74,6 +74,16 @@ builder.Host.UseSerilog((ctx, lc) =>
 // Register strongly-typed options
 builder.Services.Configure<ExternalApiOptions>(
     builder.Configuration.GetSection("ExternalSystems"));
+
+// Debug
+var options = builder.Configuration
+    .GetSection("ExternalSystems")
+    .GetChildren();
+
+foreach (var child in options)
+{
+    Console.WriteLine($"System: {child.Key}");
+}
 
 var app = builder.Build();
 

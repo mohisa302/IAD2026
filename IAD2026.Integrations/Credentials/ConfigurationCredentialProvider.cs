@@ -9,19 +9,20 @@ public class ConfigurationCredentialProvider : IExternalCredentialProvider
 {
     private readonly ExternalApiOptions _options;
 
-    public ConfigurationCredentialProvider(IOptions<ExternalApiOptions> options)
+    public ConfigurationCredentialProvider(
+        IOptions<ExternalApiOptions> options)
     {
         _options = options.Value;
     }
 
-    public Task<ApiCredential> GetCredentialAsync(string systemKey, CancellationToken ct = default)
-    {
-        if (!_options.Systems.TryGetValue(systemKey, out var system))
-        {
-            throw new InvalidOperationException($"External system '{systemKey}' is not configured in ExternalSystems section.");
-        }
 
-        // Validate AuthType
+    public Task<ApiCredential> GetCredentialAsync(
+        string systemKey,
+        CancellationToken ct = default)
+    {
+        var system = GetSystem(systemKey);
+
+
         if (!Enum.IsDefined(typeof(AuthType), system.AuthType))
         {
             throw new InvalidOperationException(
@@ -29,16 +30,32 @@ public class ConfigurationCredentialProvider : IExternalCredentialProvider
                 "Allowed values: ApiKey, Bearer, Basic.");
         }
 
+
         var credential = new ApiCredential(
             SystemKey: systemKey,
             BaseUrl: system.BaseUrl,
             AuthType: system.AuthType,
             ApiKey: system.ApiKey,
-            ApiKeyHeaderName: system.ApiKeyHeaderName,   // ← Comes from config
+            ApiKeyHeaderName: system.ApiKeyHeaderName,
             Username: system.Username,
             Password: system.Password
         );
 
+
         return Task.FromResult(credential);
+    }
+
+
+    private ExternalSystemOptions GetSystem(string systemKey)
+    {
+        return systemKey.ToLowerInvariant() switch
+        {
+            "icare" => _options.Icare,
+
+            "dcim" => _options.DCIM,
+
+            _ => throw new InvalidOperationException(
+                $"External system '{systemKey}' is not configured in ExternalSystems section.")
+        };
     }
 }
