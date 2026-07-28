@@ -13,39 +13,53 @@ namespace IAD2026.BackgroundJobs;
 public static class DependencyInjection
 {
     public static IServiceCollection AddBackgroundJobs(
-        this IServiceCollection services, IConfiguration configuration)
-    {
-        services.Configure<HangfireSettings>(configuration.GetSection("HangfireSettings"));
+    this IServiceCollection services,
+    IConfiguration configuration)
+{
+    services.Configure<HangfireSettings>(
+        configuration.GetSection("HangfireSettings"));
 
-        // 1. Add Hangfire Core & Storage
-        services.AddHangfire(config => config
+    services.AddHangfire(config =>
+    {
+        config
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()
-            .UseRecommendedSerializerSettings()
-            .UseSqlServerStorage(
-                configuration.GetConnectionString("DefaultConnection"),
-                    new SqlServerStorageOptions
-                    {
-                        PrepareSchemaIfNecessary = true,
-                        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-                        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-                        QueuePollInterval = TimeSpan.FromSeconds(15),
-                        UseRecommendedIsolationLevel = true,
-                        DisableGlobalLocks = true
-                    }));
+            .UseRecommendedSerializerSettings();
 
-        // 2. Register your job classes and strategy executors into the DI container
-        services.AddScoped<ITaskExecutor, SmsNotificationExecutor>();
-        services.AddScoped<ITaskExecutor, DatabaseRetentionExecutor>();
-        services.AddScoped<OutboxProcessorJob>();
-        services.AddScoped<SwitchPortSyncJob>();
-        // 3. Register the Hangfire Hosted Server (this node will actively process jobs)
-        services.AddHangfireServer(options =>
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
         {
-            options.WorkerCount = Environment.ProcessorCount * 2;
-            options.Queues = new[] { "default" }; // Ensure "default" is here for basic routing
-        });
+            config.UseInMemoryStorage();
+        }
+        else
+        {
+            config.UseSqlServerStorage(
+                connectionString,
+                new SqlServerStorageOptions
+                {
+                    PrepareSchemaIfNecessary = true,
+                    CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+                    SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+                    QueuePollInterval = TimeSpan.FromSeconds(15),
+                    UseRecommendedIsolationLevel = true,
+                    DisableGlobalLocks = true
+                });
+        }
+    });
 
-        return services;
-    }
+    services.AddScoped<ITaskExecutor, SmsNotificationExecutor>();
+    services.AddScoped<ITaskExecutor, DatabaseRetentionExecutor>();
+
+    services.AddScoped<OutboxProcessorJob>();
+    services.AddScoped<SwitchPortSyncJob>();
+
+    services.AddHangfireServer(options =>
+    {
+        options.WorkerCount = Environment.ProcessorCount * 2;
+        options.Queues = new[] { "default" };
+    });
+
+    return services;
+}
 }
